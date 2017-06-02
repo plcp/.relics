@@ -1,0 +1,56 @@
+add-auto-load-safe-path ./dynamorio/tools/libdynamorio.so-gdb.py
+
+set disable-randomization off
+handle SIGBUS nostop pass
+
+exec ./dynamorio/bin64/drrun
+
+
+
+set confirm off
+add-symbol-file ./libqbinstr.so 0x00000000720020a0
+add-symbol-file ./dynamorio/lib64/debug/libdynamorio.so 0x000055fd8ac15a40
+add-symbol-file ./dynamorio/ext/lib64/debug/libdrreg.so 0x00000000780024a0
+add-symbol-file ./dynamorio/ext/lib64/debug/libdrmgr.so 0x00000000730027a8
+add-symbol-file ./dynamorio/ext/lib64/debug/libdrutil.so 0x00000000750014d8
+add-symbol-file /usr/lib/libc.so.6 0x00007f44db9f78f0
+add-symbol-file /usr/lib/ld-linux-x86-64.so.2 0x00007f44db7b2b70
+
+
+
+define drrun_meta
+    run -debug -root ./dynamorio $arg0 $arg1 $arg2 $arg3 $arg4
+end
+
+define drrun_usage
+    print "usage: drrun <app>"
+    print "       drrun -<opts> <app>"
+    print "       drrun <client> -<opts> <app>"
+end
+
+define drrun
+    if $argc == 0
+        drrun_usage
+    end
+
+    if $argc == 1
+        print "running app $arg0"
+        drrun_meta -c libqbinstr.so -- $arg0 #
+    end
+
+    if $argc == 2
+        print "running app $arg1, passing $arg0 to client"
+        drrun_meta -c libqbinstr.so $arg0 -- $arg1
+    end
+
+    if $argc == 3
+        print "running app $arg2, using client $arg1, passing $arg0 to client"
+        drrun_meta -c $arg0 $arg1 -- $arg2
+    end
+
+    if $argc > 3
+        drrun_usage
+    end
+end
+
+drrun

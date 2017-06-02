@@ -1,0 +1,25 @@
+package "qbinstr"
+version "0.1"
+purpose "Simple dynamic binary instrumentation."
+usage   "qbinstr [-qbgrimey] -- <app to run>"
+
+option  "expand"        e       "Expand single-instruction rep/repne loops\
+"       flag            off
+
+option  "bytes"         b       "Log bytecodes\
+"       flag            off
+
+option  "memory"        m       "Log memory access\
+"       flag            off
+
+option  "quiet"         q       "Do not disassemble instructions\
+"       flag            on
+
+option  "general"       g       "Log general registers value\
+"       flag            off
+
+option  "hybrid"        y       "Use inlined code to make fewer clean calls\
+"       flag            off
+
+option  "inline"        i       "(Leguacy) Use inline code for improved performance\
+"       flag            off

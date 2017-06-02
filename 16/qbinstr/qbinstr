@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# cheap standalone (TODO: real standalone)
+if echo "$@"|egrep "(--help|-h|--\s*$|^\s*$)" &> /dev/null ;
+then
+    ./dynamorio/bin64/drrun -root dynamorio -c libqbinstr.so --help -- /bin/sh
+else
+    ./dynamorio/bin64/drrun -root dynamorio -c libqbinstr.so $@
+fi
+
