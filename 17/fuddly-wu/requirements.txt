@@ -1,0 +1,10 @@
+six
+sqlite3
+xtermcolor
+graphviz
+paramiko
+pyserial
+pycups
+rpyc
+ddt
+crcmod

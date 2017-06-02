@@ -1,0 +1,4 @@
+[submodule "fuddly"]
+	path = fuddly
+	url = https://github.com/k0retux/fuddly.git
+	branch = develop

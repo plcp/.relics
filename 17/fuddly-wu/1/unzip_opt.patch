@@ -1,0 +1,12 @@
+diff --git a/projects/generic/standard_proj.py b/projects/generic/standard_proj.py
+index 2e8b944..cb572cc 100644
+--- a/projects/generic/standard_proj.py
++++ b/projects/generic/standard_proj.py
+@@ -55,6 +55,7 @@ local2_tg.set_target_path('okular')
+ 
+ local3_tg = LocalTarget(tmpfile_ext='.zip')
+ local3_tg.set_target_path('unzip')
++local3_tg.set_pre_args('-o ')
+ local3_tg.set_post_args('-d ' + gr.workspace_folder)
+ 
+ net_tg = NetworkTarget(host='localhost', port=12345, data_semantics='TG1', hold_connection=True)
