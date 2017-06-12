@@ -1,0 +1,22 @@
+Add slicing + (hideous) toy
+# You are commiting as "plcp <matthieu@daumas.me>"
+#
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch master
+# Your branch is up-to-date with 'origin/master'.
+#
+# Changes to be committed:
+#	modified:   CMakeLists.txt
+#	new file:   mergeslice.cpp
+#	new file:   mergeslice.h
+#	modified:   tests/sequencegeneration.cpp
+#
+# Changes not staged for commit:
+#	modified:   CMakeLists.txt
+#	modified:   activation.h
+#
+# Untracked files:
+#	shuffle.cpp
+#	shuffle.h
+#

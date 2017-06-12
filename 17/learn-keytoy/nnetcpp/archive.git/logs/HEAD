@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 ef9e295d20baf56497168c0a69f80649121fe8a3 plcp <matthieu@daumas.me> 1495541571 +0200	clone: from https://github.com/steckdenis/nnetcpp.git
+ef9e295d20baf56497168c0a69f80649121fe8a3 ef9e295d20baf56497168c0a69f80649121fe8a3 plcp <matthieu@daumas.me> 1497273771 +0200	reset: moving to HEAD
+ef9e295d20baf56497168c0a69f80649121fe8a3 5be1337f93d47aeb54619dc7e7aed8f7655f206d plcp <matthieu@daumas.me> 1497273986 +0200	commit: Add slicing + (hideous) toy
