@@ -180,6 +180,7 @@ Network *makeNet(int nb_in, int nhidden, int nb_out, float rate)
 		sum->addInput(last);
 		last = lstm->output();
 	}
+	sum->addInput(last);
 	out->setInput(sum->output());
 
 	net->addNode(sum);

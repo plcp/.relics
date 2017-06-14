@@ -1,1 +1,2 @@
 0000000000000000000000000000000000000000 776ec3bad9e83349f348fbb60fc04db973bdf7f8 wil <wil@omega.tls.fr.eu.airbus.corp> 1497275260 +0200	clone: from https://github.com/plcp/learn-keytoy.git
+776ec3bad9e83349f348fbb60fc04db973bdf7f8 db41c0e6d712976a6b5b849a04cd45853b78a7b1 plcp <matthieu@daumas.me> 1497433566 +0200	commit: Use the last layer of LSTM
