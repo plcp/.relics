@@ -1,0 +1,3 @@
+[submodule "clenche"]
+	path = clenche
+	url = https://github.com/plcp/clenche
