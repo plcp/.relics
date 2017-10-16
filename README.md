@@ -2,6 +2,7 @@
 
 Archiving 2017:
 ```
+17/cervel: unfinished work about graph-based calculus units (to be rebooted)
 17/cars: millions of cars driving toward the mouse pointer
 17/spock: rock-paper-scissors-lizard-spock against a pool of 1 million players
 17/perlant: « ants » with few recurrent neurons evolve to eat perlin noise
