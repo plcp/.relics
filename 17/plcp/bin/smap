@@ -1,0 +1,15 @@
+#!/bin/bash
+
+input="$1"
+shift
+cmd="$1"
+test -z "$cmd" && cmd="cat"
+shift
+
+if [ -z "$input" ];
+then
+	stdbuf -i0 -e0 -o0 "$cmd" "$@" < <(stdbuf -i0 -e0 -o0 cat)
+else
+	stdbuf -i0 -e0 -o0 "$cmd" "$@" < "$input"
+fi
+

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+function which(){ /bin/sh -c "which $@" ; }

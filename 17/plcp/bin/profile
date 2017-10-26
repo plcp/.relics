@@ -1,0 +1,137 @@
+#!/bin/bash
+
+if [ -n "$tkngt" ];
+then
+	pre="profile"
+	source "$(config-get root)/lib/mktemp.source"
+	source "$(config-get root)/lib/which.source"
+fi
+
+[ "$1" == "--help" ] && echo -e 				\
+	"Usage: $0 [--no-color|--help] <path-to-script>" 	\
+	"\n\t(will run & profile your bash script)" 		&& exit 1
+
+width="$(tput cols)"
+
+nocolor="false"
+[ "$1" == "--no-color" ] && nocolor="true" && shift
+$nocolor && function tput() { :; }
+
+test ! -f "$1" && echo "Invalid target file '$1'." && exit -1
+
+PS4_token="$($(which mktemp) -u XXXXXX)"
+PS4='$(date "+_ %s.%N ($LINENO) [profiling_$PS4_token] + ")'
+pro="$(mktemp)"
+tme="$(mktemp)"
+
+export PS4 PS4_token
+$(which time) -o "$tme" bash -x "$1" 2> "$pro"
+nbms=$( echo "1000 * $( \
+			cat "$tme" 				| \
+			grep 'elapsed' 				| \
+			sed 's/^.*:\([0-9\.]*\)elapsed.*$/\1/g' \
+		)" 			| \
+		bc			| \
+		sed 's/.00*$//g'	\
+)
+nbms="$(($nbms + 1))"
+
+$nocolor || echo -e 							\
+	"\nBourne-again shell profiler." 				\
+	"\n\n$(tput setaf 5)"						\
+       	"% total | nline | count * time per it. = line total  "		\
+	"| % line quoted$(tput sgr0)"
+
+target="$1"
+lines="$(cat $target|wc -l)"
+
+last=""
+line=""
+declare -a counts lengths precise perexec percent
+
+while read time next_line garbage;
+do
+	test -z "$last" && last="$time" && continue
+	test -z "$line" && line="$next_line" && continue
+
+	length="$(echo "($time - $last) * 1000000000" | bc | sed 's/\.00*//g')"
+	lengths[$line]="$((${lengths[line]:-0} + $length))"
+	counts[$line]="$((${counts[line]:-0} + 1))"
+
+	last="$time"
+	line="$next_line"
+done <<< "$( \
+	cat "$pro" 						| \
+	grep -o "_ [0-9]*.[0-9]* (..) \[profiling_$PS4_token\]" | \
+	sed 's/(//g;s/)//g;s/^_ //g' 				\
+)"
+
+(for i in $(seq 1 "$lines");
+do
+	read -r codeline
+	
+	perexec[$i]="$( \
+		echo "scale=4; ${lengths[i]:-0} / ${counts[i]:-0} / 1000000"| \
+		sed 's_/ 0_/ 1_g' 					    | \
+		bc							    \
+	)"
+	precise[$i]="$(echo "scale=4; ${lengths[i]:-0} / 1000000" | bc)"
+	percent[$i]="$(echo "scale=6; ${precise[i]} / $nbms" | bc)"
+
+	[ "${counts[i]:-0}" == "0" ] && continue
+
+	pclr="$(tput setaf 2)"
+	pbld="$(tput dim)"
+	if (( $(echo "${percent[i]} > 0.20"|bc -l) ));
+	then
+		pclr="$(tput setaf 1)"
+		pbld="$(tput bold)"
+	elif (( $(echo "${percent[i]} > 0.10"|bc -l) ));
+	then 
+		pclr="$(tput setaf 3)"
+		pbld="$(tput setaf 7)"
+	fi
+
+	cbld="$(tput dim)"
+	if (( $(echo "${counts[i]:-0} > 199"|bc -l) ));
+	then cbld="$(tput bold)"
+	elif (( $(echo "${counts[i]:-0} > 99"|bc -l) ));
+	then cbld="$(tput setaf 7)"
+	fi
+
+	sgr="$(tput sgr0)"
+	blu="$(tput setaf 4)"
+	cya="$(tput setaf 6)"
+
+	echo -ne " ${percent[i]}$sgr$(echo -ne '\r')$pclr"
+	msg="$( \
+	printf "$( echo -n \
+			" %-7s$sgr | $pbld$cbld${cya}l.%-3s$sgr | $cbld%5s"    \
+			"*%11sms$sgr =$pbld%11sms | $blu%% "		       \
+		)"						\
+		${percent[i]}					\
+		${i}						\
+		${counts[i]:-0}					\
+		${perexec[i]}					\
+		${precise[i]} 					\
+	)"
+
+	if $nocolor;
+	then pure="$msg........."
+	else pure="$( \
+		sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" <<< "$msg"
+		)"
+	fi
+
+	refined="${msg}$( \
+		head -c $(($width - ${#pure} - 1 + 9)) <<< "$codeline") "
+	sed "s/^\(.\{$( \
+			echo -n "$(($width - 5 + ${#msg} - ${#pure} + 9))"
+		)\}\).....$/\1 […] /g"   <<< "$refined"
+
+done <<< "$(cat "$target")")| sort
+
+$nocolor || echo -ne "\n"
+echo "$(tput sgr0)Total: $(tput bold)${nbms}ms$(tput sgr0)"
+$nocolor || echo -ne "\n"
+

@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# save terminal as-is
+tput smcup
+tput cup 0 0
+
+# display a skippable warning for some seconds
+source "$(config-get root)/etc/git.config"
+echo -e "$(tput bold)Warning:$(tput sgr0)"
+echo -ne "\tYou're going to commit as "
+echo -ne "\"$(tput setaf 2)$(tput bold)$(config-get author)$(tput sgr0)"
+echo -e  " <$(tput setaf 2)$(tput setb 7)$(config-get mail)$(tput sgr0)>\"\n"
+read -t 3
+
+# put a second warning at the beginning of the commit's comments
+sed -i "s/^# Please enter/# You are commiting as \"$(config-get author) <$(config-get mail)>\"\n#\n# Please enter/g" "$1"
+
+# start vim without saving the terminal as-is, so it will be restored later
+exec vim -c 'set t_ti=' "$1"

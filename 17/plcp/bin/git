@@ -1,0 +1,14 @@
+#!/bin/bash
+
+source "$(config-get root)/etc/git.config"
+
+source "$(config-get root)/lib/which.source"
+$(which git)	 								\
+	-c user.name="$(config-get author)"					\
+	-c user.email="$(config-get mail)" 					\
+	-c core.editor="$(config-get editor)"					\
+	-c alias.cached="diff --cached"						\
+	-c alias.last="show --format=full HEAD"					\
+	-c alias.pull="pull --rebase"						\
+	-c alias.amend="commit --amend" 					\
+	"$@"

@@ -1,0 +1,87 @@
+#!/bin/bash
+
+pre="pylintest"
+source "$(config-get root)/lib/mktemp.source"
+source "$(config-get root)/lib/which.source"
+
+usr_bin="$(config-get root)/usr/bin"
+usr_lcl="$(config-get root)/usr/local"
+venv="$usr_bin/$pre"
+
+grep -q "virtualenv" < <(which virtualenv) || exec die "Unable to find virtualenv."
+grep -q "python3" < <(which python3) || exec die "Unable to find python3."
+grep -q "pip3" < <(which pip3) || exec die "Unable to find pip3."
+
+if [ ! -d "$venv" ];
+then
+	virtualenv -p python3 "$venv"
+	source "$venv/bin/activate"
+	pip3 install pylama yapf autopep8 isort pep257 vulture
+	deactivate
+fi
+
+source "$venv/bin/activate"
+
+r="$(echo -e "\r")"
+for file in "$@";
+do
+	read -p " > press Enter to sanitize « $file »
+		$r" || continue
+	target="$(mktemp --suffix ".py")"
+	rwname="$(cut -f 4 -d "/" <<< "$target")"
+
+	cp "$file" "$target"
+	cd "$mktemp_dir"
+	
+	git init &> /dev/null
+	
+	echo "*" >> ./.gitignore
+	echo "!.gitignore" >> ./.gitignore
+	echo "!$rwname" >> ./.gitignore
+
+	git add ".gitignore" &> /dev/null
+	git commit -m "Initial" &> /dev/null
+	
+	git add "$target" &> /dev/null
+	git commit -m "Unaltered" &> /dev/null
+
+	echo "[isort]"
+	isort -e --atomic "$target"
+
+	git add -p "$target"
+	git commit -m "Apply isort" "$target" &> /dev/null
+	
+	echo "[autopep8]"
+	autopep8 --experimental -iaaaaa "$target"
+	
+	git add -p "$target"
+	git commit -m "Apply autopep8" "$target" &> /dev/null
+
+	echo "[yapf]"
+	python3 -m yapf --style pep8 -i "$target"
+
+	git add -p "$target"
+	git commit -m "Apply yapf" "$target" &> /dev/null
+
+	echo "[save]"
+	read -p " > press Enter to save edits made to « $file »
+		$r" && cp "$target" "$file"
+
+	echo -e "[pylama]"
+	read -p " > press Enter to retrieve lints for « $file »
+		$r" && pylama -l "pep8,pyflakes,pycodestyle,mccabe" "$target" \
+		|& sed --sandbox "s|$rwname|$file|g"
+
+	echo "[pep257]"
+	read -p " > press ^D to check docstrings for « $file »
+		$r" || pep257 "$target" \
+		|& sed --sandbox "s|$target|$file|g"
+
+	echo "[vulture]"
+	read -p " > press Enter to check for deadcode in « $file »
+		$r" && vulture "$file"
+
+	echo "..."
+	git reset --hard &> /dev/null
+	rm -rf "$target" "$dir/.git"
+done

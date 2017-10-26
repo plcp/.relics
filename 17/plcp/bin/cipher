@@ -1,0 +1,45 @@
+#!/bin/bash
+
+pre="cipher"
+source "$(config-get root)/lib/mktemp.source" 
+source "$(config-get root)/lib/which.source"
+
+user="$(cat /dev/urandom|base64|head)"
+seed="$(cat /dev/urandom|base64|head)"
+pass="$(cat /dev/urandom|base64|head)"
+read -p 'User: ' user > /dev/stderr
+read -p 'Seed: ' seed > /dev/stderr
+read -s -p 'Password: ' pass > /dev/stderr
+
+src="$(mktemp)"
+function cleanup(){ shred -u "$src" ; rm -rf "$mktemp_dir" ;}
+trap cleanup EXIT
+
+file="$1"
+test -z "$file" && file="-"
+
+if [ "$file" == "-" ];
+then file="/dev/stdin"
+else echo '' > "$file.gpg" || exit 1
+fi
+
+echo -e "\n\nCiphering $file..." > /dev/stderr
+smap "$file" mangle > "$src"
+test "$2" == "--shred" && shred -u "$file"
+
+gpg -c --passphrase-file <(pbsum <<< "${seed}:${user}:${pass}") --batch "$src"
+
+user="$(cat /dev/urandom|base64|head)"
+seed="$(cat /dev/urandom|base64|head)"
+pass="$(cat /dev/urandom|base64|head)"
+
+shred -u "$src"
+function cleanup(){ rm -rf "$mktemp_dir" ;}
+trap cleanup EXIT
+
+if [ "$file" == "/dev/stdin" ];
+then smap "$src.gpg" mangle
+else smap "$src.gpg" mangle > "$file.gpg" ; echo "$file.gpg"
+fi
+
+shred -u "$src.gpg"

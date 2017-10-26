@@ -1,0 +1,17 @@
+#!/bin/bash
+
+source "$(config-get root)/lib/which.source" ; unalias mktemp &> /dev/null
+if [ ! "$(which mktemp)" == "$(type mktemp|awk {'print $3'})" ]
+then
+	return 1 &> /dev/null
+	exit 1
+fi
+
+test -z "$pre" && pre="$(mktemp -u XXXXXXXX)"
+mktemp_run="$(mktemp -u XXXXXXXX)"
+mktemp_dir="$(mktemp -d "/tmp/$pre.XXXXXXXXXXXXXXXX")"
+function mktemp(){ $(which mktemp) "$@" -p "$mktemp_dir" "$mktemp_run.XXXXXXXX"; }
+
+function cleanup(){ rm -rf "$mktemp_dir" ; }
+trap cleanup EXIT
+

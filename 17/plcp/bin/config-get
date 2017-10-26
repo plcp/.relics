@@ -1,0 +1,21 @@
+#!/bin/bash
+
+test -z "$tkngt" && exit -1
+
+function vset()
+{
+	# bind a new variable, then set its attribute to « exported » (1), then marks array dirty
+	gdb --batch-silent -ex "attach $PPID" -ex "set bind_variable(\"$1\", \"$2\", 0)" \
+		-ex "set *(int*)(find_variable(\"$1\")+sizeof(char*)*5) = 1" \
+		-ex 'set array_needs_making = 1' &> /dev/null
+}
+
+function vget() { eval "echo -n \"\$$1\"" ; }
+
+function config-set() { target="${tkngt}_config_$1" ; shift ; vset "$target" "$@" ; }
+function config-get() { target="${tkngt}_config_$1" ; shift ; vget "$target" "$@" ; }
+export -f config-set config-get vset vget
+
+"$(basename "$0")" \
+	"$(cut -f 1 -d ' ' < <(sed "s/\"/'/g" <<< "$@"))" \
+	"$(cut --complement -f 1 -d ' ' < <(sed "s/\"/'/g" <<< "$@"))"

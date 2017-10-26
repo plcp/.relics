@@ -1,0 +1,22 @@
+#!/bin/bash
+
+pre="demangle"
+source "$(config-get root)/lib/mktemp.source" 
+source "$(config-get root)/lib/which.source"
+
+a="$(mktemp)"
+b="$(mktemp)"
+function cleanup(){ shred -u "$a" "$b" ; rm -rf "$mktemp_dir" ; }
+trap cleanup EXIT
+
+cat > "$a"
+smap "$a" gzip -d - > "$b"
+smap "$b" base64 -d > "$a"
+smap "$a" gzip -d - > "$b"
+smap "$b" unhexlify > "$a"
+
+cat "$a"
+shred -u "$a"
+shred -u "$b"
+rm -rf "$mktemp_dir"
+trap - EXIT

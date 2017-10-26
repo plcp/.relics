@@ -1,0 +1,33 @@
+#!/bin/bash
+
+if type config-get &> /dev/null;
+then
+	source "$(config-get root)/lib/which.source"
+else
+	function which(){ /bin/sh -c "which $@" ; }
+fi
+
+function resolve() {
+
+	if [ -z "$@" ]
+	then
+		src="${BASH_SOURCE[0]}"
+		if [ -z "$src" ]
+		then
+			src="$0"
+		fi
+	else
+		src="$(which "$@")"
+	fi
+
+	while [ -h "$src" ]
+	do
+	  dir="$(cd -P "$( dirname "$src" )" && pwd)"
+	  src="$(readlink "$src")"
+	  [[ $src != /* ]] && src="$dir/$src"
+	done
+	echo -n "$(cd -P "$( dirname "$src" )" && pwd)"
+}
+
+export -f resolve
+resolve "$@"

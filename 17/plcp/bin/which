@@ -1,0 +1,4 @@
+#!/bin/bash
+
+export PATH="$(echo "$PATH"|sed "s,[^:]*plcp/bin:,,g;s,:[^:]*plcp/bin,,g")"
+exec /bin/sh -c "/bin/which $@"

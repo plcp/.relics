@@ -1,0 +1,44 @@
+#!/bin/bash
+
+pre="cipher"
+source "$(config-get root)/lib/mktemp.source" 
+source "$(config-get root)/lib/which.source"
+
+user="$(cat /dev/urandom|base64|head)"
+seed="$(cat /dev/urandom|base64|head)"
+pass="$(cat /dev/urandom|base64|head)"
+read -p 'User: ' user > /dev/stderr
+read -p 'Seed: ' seed > /dev/stderr
+read -s -p 'Password: ' pass > /dev/stderr
+
+src="$(mktemp)"
+function cleanup(){ shred -u "$src" ; rm -rf "$mktemp_dir" ;}
+trap cleanup EXIT
+
+file="$1"
+test -z "$file" && file="-"
+if [ "$file" == "-" ];
+then file="/dev/stdin"
+else echo '' > "$file.gpg" || exit 1
+fi
+
+output="$2"
+test -z "$output" && output="-"
+if [ "$output" == "-" ];
+then output="/dev/stdout"
+else echo '' > "$output" || exit 1
+fi
+
+echo -e "\n\nDeciphering $file to $output..." > /dev/stderr
+smap "$file" demangle > "$src"
+
+smap <(gpg -d --passphrase-file <(pbsum <<< "${seed}:${user}:${pass}") --batch "$src") demangle > "$output"
+
+user="$(cat /dev/urandom|base64|head)"
+seed="$(cat /dev/urandom|base64|head)"
+pass="$(cat /dev/urandom|base64|head)"
+
+shred -u "$src"
+function cleanup(){ rm -rf "$mktemp_dir" ;}
+trap cleanup EXIT
+

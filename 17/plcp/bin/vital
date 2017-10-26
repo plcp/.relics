@@ -1,0 +1,57 @@
+#!/bin/bash
+
+pre="vital"
+source "$(config-get root)/lib/mktemp.source"
+source "$(config-get root)/lib/which.source"
+source "$(config-get root)/lib/curl.source"
+
+sum="$(mktemp)"
+pay="$(mktemp)"
+echo "208e330c75ffd93949be0258660973bef8223917f036325020f3a4c51b4ca430  -" > "$sum"
+curl-nocache perdu.com 2> /dev/null | sha256sum > "$pay"
+diff -q "$sum" "$pay" && echo "Connection already established." && exit 0
+echo "Bootstrapping..."
+
+# The following script is ciphered.
+seed="1WKxawvB8qwruVwUe8ZkHhaoTIVcrvJiD6f"
+source "$(config-get root)/etc/vital.config" # sed -i 's/L44/L45/g'
+
+ciphertext="$(mktemp)"
+(base64 -d > "$ciphertext") <<- "__EOF__"
+H4sIAD+pGlkAAwXBNYKDQAAAwAdR4JAUVwQWd5cOJ1iAxV9/MzIFlQ9AZmnoP587CnBKAIbTCtGt
+KKqxuLxNxJQ5shMbwvVsD66nPSxTTe/QXitZnribX8SGDVrsKXVFpzN90nRGU3Cbqp2zt8Vwjwnk
+yHNYb0bHkHg4mVLPhyRfWWK5St2UmasCmxUcS6DERJ821JmNPGSlQAcUXqw51Fi1ZKZMIRebm2cP
+3iO68AJzzf43K9jWskV3qlSbmGfr2KcR9RhjX7TXPWwL7cBDAyxuDqj449SATdDWZ1cBL75hbKch
+KehP/ZvMHyk/CSRSJb3iI9bek4koHbZedJA3uBQwW3ZiuRtjSvGea0aHnvRCIM0KFtKosEIyG9Vn
+dtI0ZblMBD86zmIJMr45Dgby9XyH7vOrBgGyjTbJUJCFpmanbSN3fP8g4SI9nQCozXHwxgVeOdIU
+NcSHfVQH7PI1N6mIJMRhKHfiJlCtx3VYrv4bWfLsIa5NuYB5SE//pn5nQ+bHwG4ZXVtvNiUW8aeU
+uGzoi9uEJMQaqQVSJurAd10j5aJTr+FPRLa9LWC2QrGxv1/SQ8HF6eloX707rs4pasXL1N7nU/do
+sV4Z8TCVel+0/2bSnVCcPVPW8kb59u50FfuW8wxhQ4eaiGpiPCFhontCdXv9OblyDWr/yQdcB2iX
+IqYlLN8JgyjqkSOq4M3vt2KjqxOJG1O6n3JIVDef730fun5aHx7ziX2ZqeH1UnneaXxYMcrMjliv
+5FmAThmP70IRifm2Ez55EO+TkLLGw/nwBKPgVcpFrL9yq3wn5yzy7lI7vHjZXR+GeTLCMFzJUmTV
+GpP2eAey55FHEAl2DJYEb4UGMz7fFMu1IIze/gTCrrwMsVeMuMHOwPPCaYhrgPtxqxp2eY3nuDcS
+HjkNKiRoAtT6XHKZ4aRebItri0isEKqENQn6TjAm/F1UPJ0QeZLzlXFnP9Da+cu1MU2sCJFfoxTC
+qXjlqHisjapkjkd/HQOcbp5jzJWxDa+wRNcBQd57gLRQs7EMlNnis52pWBwjpKwP4MBK0jUsklxJ
+AhJxwqvINUsmGv5IOnVJHFVKm0k+JuaYVliZAHzn+eFBkr2G+bwpGq2+iEThA+a1BXAhFzVY9Jg9
+ekjdLemO+Pl8/v4BKGiRC1AEAAA=
+__EOF__
+
+source "$(config-get root)/etc/pbsum.config"
+config-get seed|sha256sum|grep -vq "7acbc2a005c37f3ab52988eb258c87897266da622f807a41101573c35d634ce5" \
+	&& echo "Wrong env seed, unable to decrypt." && exit 1
+
+# Note:
+#  - « gpg: decryption failed: Bad session key »
+#  - Ensure that you have « gpg (GnuPG) 2.1.14 »
+#  - Run `gpgconf --reload gpg-agent` then retry. 
+
+src="$(mktemp)"
+function cleanup(){ shred -u "$src" ; rm -rf "$mktemp_dir" ; }
+trap cleanup EXIT
+
+decipher "$ciphertext" "$src" < <(echo -e "$user\n$seed\n$pass") 2> /dev/null
+
+chmod +x "$src"
+"$src" <<< "$user
+$pass"
+echo "Done."

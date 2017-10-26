@@ -1,0 +1,167 @@
+#!/bin/bash
+
+source "$(config-get root)/lib/which.source"
+if [ -z "$(which xset)" ];
+then 
+	exec "$(which i3lock)"
+fi
+
+if [ -z "$(which xinput)" ];
+then
+	echo "Install xinput for advanced features."
+	exec "$(which i3lock)"
+fi
+
+source "$(config-get root)/lib/mktemp.source"
+function kbmap-save()
+{
+	setxkbmap -print > "$kbcomp"
+	setxkbmap -query | sed "s/^\([^:]*\):\s*/-\1 /g"|xargs > "$kbmap"
+	echo "$DISPLAY" > "$display_name"
+}
+function kbmap-restore()
+{
+	nkbmap="$(mktemp)"
+	for _ in $(seq 0 10);
+	do
+		sleep 0.1
+		setxkbmap $(cat $kbmap)
+		sleep 0.1
+		xkbcomp "$kbmap" "$(cat "$display_name")" &> /dev/null
+		sleep 0.1
+		setxkbmap -print > "$nkbmap" ;
+		diff -q "$kbcomp" "$nkbmap" &> /dev/null && break
+	done
+}
+kbmap="$(mktemp)"
+kbcomp="$(mktemp)"
+display_name="$(mktemp)"
+
+# load config from file
+source "$(config-get root)/etc/lock.config"
+
+# start or kill the locking program
+function lock-start() {
+	$(config-get lockprg) &
+	sleep 0.1
+	xset dpms force off
+}
+
+function lock-kill() {
+	killall $(config-get lockprg) &> /dev/null
+}
+
+# disable input devices
+function freeze()
+{
+	kbmap-save
+	for device in $devices;
+	do
+		[ "$device" == "$watchdog" ] && continue
+		xinput set-prop "$device" 139 0 &> /dev/null
+	done
+	kbmap-restore
+}
+
+# re-enable input devices
+function unfreeze()
+{
+	for device in $devices;
+	do
+		xinput set-prop "$device" 139 1 &> /dev/null
+	done
+	kbmap-restore
+}
+
+# handle watchdog
+function xinput-watch()
+{
+	while true
+	do
+		xset dpms force off
+		timeout --preserve-status 5 bash -c "xinput test $watchdog | head -c 0" && return
+	done
+}
+
+# disable keyboard input, lock, wait for the watchdog, then re-enable the keyboard
+function lock-watch()
+{
+	# shutdown the screen, then freeze inputs
+	xset dpms force off
+	freeze
+
+	# then (re)start the locker
+	lock-kill
+	lock-start
+
+	# wait for an input on the watchdog device, then unfreeze inputs
+	xinput-watch
+	unfreeze
+}
+
+# lock, then lock again after a small timeout 
+function lock-again() {
+
+	# lock the screen
+	lock-start
+
+	# lock the screen until unlocked
+	while true;
+	do
+		lock-watch
+		kbmap-restore # (again, just to be sure)
+
+		# you got few seconds to unlock
+		token=""
+		valid="$($(which mktemp) -u XXXX)"
+		for sec in $(seq 0 "$(config-get locktime)"|tac);
+		do
+			[ "$token" == "$valid" ] && return
+
+			tput cup 0 0
+			echo -ne "\n$(tput bold)Type « $valid », "
+		        echo -ne "locking the screen in ${sec}s...   $(tput sgr0)"
+
+			tput cup 2 4
+			read -p "     > $token" -t 1 -n 1 -s ttykey && token="$token$ttykey"
+		done
+		xset dpms force off
+	done
+}
+
+# initialize behaviors when killed
+function lock() {
+	# make the script uninterruptible
+	set +m ; stty susp undef ; stty intr undef
+
+	# lock anyways if killed
+	function cleanup()
+	{
+		($(config-get lockprg) &) ;
+		unfreeze ; set -m ; stty sane ; tput rmcup ;
+		rm -rf "$mktemp_dir" ;
+	}
+	trap cleanup EXIT
+
+	# initate the lock
+	lock-again
+
+	# unlocked with success, just exit nicely
+	function cleanup()
+	{
+		unfreeze ;
+		set -m ; stty sane ; tput rmcup ;
+		rm -rf "$mktemp_dir" ;
+	}
+	trap cleanup EXIT
+}
+
+# save terminal state, then shutdown the screen
+tput smcup
+xset dpms force off
+
+# collect devices to lock
+devices="$(xinput --list|egrep -o "id=[0-9]*"|sed "s/id=//g;s/$watchdog//g"|xargs)"
+
+# lock the screen
+lock

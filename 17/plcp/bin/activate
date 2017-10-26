@@ -1,0 +1,35 @@
+#!/bin/bash
+bindir="$(dirname $(readlink -f ${BASH_SOURCE[0]}))"
+bindir="$($bindir/resolve)"
+
+function tokenize() { echo -n "$@"|sha256sum|head -c 16 ; }
+tkngt="t$(tokenize $(pwd))"
+export tkngt
+
+function vset() { tmp="$2"; eval "export $1=\$tmp" ; }
+function vget() { eval "echo -n \"\$$1\"" ; }
+
+function config-set() { target="${tkngt}_config_$1" ; shift ; vset "$target" "$@" ; }
+function config-get() { target="${tkngt}_config_$1" ; shift ; vget "$target" "$@" ; }
+export -f config-set config-get vset vget
+
+config-set "root" "$(dirname "$bindir")"
+source "$(config-get root)/etc/activate.config"
+
+valid="v$(tokenize "$(config-get name)")"
+if [ "$(vget "$tkngt")" == "$valid" ]
+then
+	echo "Token $tkngt set - env already sourced."
+	echo " - Restart your terminal to unsource." 
+	return 1 &> /dev/null
+	exit 1
+else
+	vset "$tkngt" "$valid"
+fi
+
+export PATH="$bindir:$PATH"
+export PS1="[$(config-get "name")] $PS1"
+
+unset bindir
+unset valid
+

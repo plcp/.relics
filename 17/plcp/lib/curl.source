@@ -1,0 +1,4 @@
+#!/bin/bash
+
+source "$(config-get root)/lib/which.source"
+function curl-nocache(){ $(which curl) -H 'Cache-Control: no-cache' "$@?$($(which mktemp) -u XXXXXXXX)" ; }

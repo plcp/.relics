@@ -1,0 +1,24 @@
+#!/bin/bash
+
+pre="mangle"
+source "$(config-get root)/lib/mktemp.source" 
+source "$(config-get root)/lib/which.source"
+
+a="$(mktemp)"
+b="$(mktemp)"
+function cleanup(){ shred -u "$a" "$b" ; rm -rf "$mktemp_dir" ; }
+trap cleanup EXIT
+
+cat > "$a"
+smap "$a" hexlify 		> "$b" 
+smap "$b" tr -d '[:space:]' 	> "$a" 
+smap "$a" gzip -c - 		> "$b" 
+smap "$b" base64 		> "$a"
+smap "$a" tr -d '[:space:]' 	> "$b" 
+smap "$b" gzip -c - 		> "$a" 
+
+cat "$a"
+shred -u "$a"
+shred -u "$b"
+rm -rf "$mktemp_dir"
+trap - EXIT

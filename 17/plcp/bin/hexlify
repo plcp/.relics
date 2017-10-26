@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+import sys, binascii
+
+try:
+    buffer_size = int(sys.argv[1])
+except:
+    buffer_size = 8192
+
+while True:
+    payload = b'\x00' * buffer_size
+    payload = sys.stdin.buffer.read(buffer_size)
+    if payload == b'':
+        break
+    sys.stdout.buffer.write(binascii.hexlify(payload))
+    payload = b'\x00' * buffer_size
