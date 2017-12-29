@@ -2,6 +2,7 @@
 
 Archiving 2017:
 ```
+17/binfmt_misc: poor man's rootkit (some trivia involving binary formats)
 17/flocks: millions of boids flocks around and toward the mouse
 17/ah: rating of various ah! and denis brogniart's ah! with librosa
 17/subcut.py: slicing conference audio with librosa
