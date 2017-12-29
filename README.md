@@ -2,6 +2,7 @@
 
 Archiving 2017:
 ```
+17/eightdom: a small game about playing against yourself in a terminal
 17/plcp: drop-in repository to setup a local env. to be "at home" everywhere
 17/cervel: unfinished work about graph-based calculus units (to be rebooted)
 17/cars: millions of cars driving toward the mouse pointer
