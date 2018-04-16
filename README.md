@@ -2,6 +2,7 @@
 
 Archiving 2018:
 ```
+18/sntt: rewriting LWE crypto libraries to learn the hard way
 18/fenestre: feature-less gateway (to be rebooted)
 ```
 
