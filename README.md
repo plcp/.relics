@@ -2,6 +2,7 @@
 
 Archiving 2018:
 ```
+18/hn: HackerNews survey
 18/cv: my curriculum vitæ (2017)
 18/sown: A small game for Christmas written in few days
 18/sntt: rewriting LWE crypto libraries to learn the hard way
