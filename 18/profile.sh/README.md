@@ -13,7 +13,7 @@ cd profile.sh
 # wait for it
 ```
 
-# How does it works?
+# How does it work?
 
 The profiler itself invokes the given script with `bash -x` after doing some
 `PS4` hackery, then processes all the output with lots of `bc` and displays a
