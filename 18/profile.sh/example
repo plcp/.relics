@@ -1,0 +1,42 @@
+#!/bin/bash
+
+function pbsum() {
+	padding="$(echo -en '\x01\x02\x02\x01')"
+	initial="seed"
+	while read payload;
+	do
+		lpad="_l$padding$initial$padding${payload}pad_"
+		rpad="_r$padding$payload$padding${initial}pad_"
+		ipad="$(($ipad + 1))"
+
+		read -r frst < <(sha256sum <<< "$ipad$lpad")
+		read -r last < <(sha256sum <<< "$ipad$initial$rpad")
+		read -r initial < <(sha256sum <<< "$ipad$lpad$frst$last$rpad")
+	done
+
+	n="30"
+	m="5"
+	for npad in $(seq 1 "$(($n - 1))");
+	do
+		payload="$npad$initial"
+		test -n "$verb" && \
+			echo -ne "\r$(($npad * $m))/$(($n * $m))" &> /dev/stderr
+
+		for mpad in $(seq 1 "$m");
+		do
+			lpad="_l$padding$initial$padding${payload}pad_"
+			rpad="_r$padding$payload$padding${initial}pad_"
+			ipad="$(($ipad + 1))"
+
+			read -r frst < <(sha256sum <<< "$npad$padding$mpad$padding$ipad$lpad")
+			read -r last < <(sha256sum <<< "$ipad$initial$rpad")
+			read -r initial < <(sha256sum <<< "$ipad$lpad$frst$last$rpad")
+		done
+	done
+
+	test -n "$verb" && \
+		echo -ne "\r$(($n * $m))/$(($n * $m))" &> /dev/stderr
+	echo -n "$initial" | awk {'print $1'}
+}
+
+echo "$@" | pbsum
