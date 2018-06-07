@@ -2,6 +2,7 @@
 
 Archiving 2018:
 ```
+18/tim: randomly search for a worst-case for python's sort
 18/profile.sh: Bourne-again shell profiler
 18/hn: HackerNews survey
 18/cv: my curriculum vitæ (2017)
