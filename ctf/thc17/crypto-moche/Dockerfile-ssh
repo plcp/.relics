@@ -1,0 +1,17 @@
+FROM debian:jessie
+
+RUN apt-get update -y && \
+    apt-get upgrade -y && \
+    apt-get install -y openssh-server && \
+    mkdir /var/run/sshd && \
+    useradd -mUs /bin/bash alice
+
+COPY src/flag.gpg /home/alice/
+RUN echo "alice:aaaaa" | chpasswd && \
+    passwd -n 10000 alice && \
+    chmod 733 /tmp && \
+    chown -R root:alice /home/alice && \
+    chmod -R 755 /home/alice
+
+EXPOSE 22
+ENTRYPOINT ["/usr/sbin/sshd", "-D"]

@@ -2,6 +2,7 @@
 
 Archiving 2018:
 ```
+ctf/thc18: challenges written for the THC18 on-site CTF
 18/tim: randomly search for a worst-case for python's sort
 18/profile.sh: Bourne-again shell profiler
 18/hn: HackerNews survey
@@ -13,6 +14,7 @@ Archiving 2018:
 
 Archiving 2017:
 ```
+ctf/thc17: challenges written for the THC17 on-site CTF
 17/binfmt_misc: poor man's rootkit (some trivia involving binary formats)
 17/flocks: millions of boids flocks around and toward the mouse
 17/ah: rating of various ah! and denis brogniart's ah! with librosa

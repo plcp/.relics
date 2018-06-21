@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+    oracles-1:
+        image: crypto-oracles-1
+        build:
+            context: "1/"
+        restart: unless-stopped
+        ports:
+            - "7121:7121"
+
+    oracles-2:
+        image: crypto-oracles-2
+        build:
+            context: "2/"
+        restart: unless-stopped
+        ports:
+            - "7122:7122"
+
+    oracles-3:
+        image: crypto-oracles-3
+        build:
+            context: "3/"
+        restart: unless-stopped
+        ports:
+            - "7123:7123"
